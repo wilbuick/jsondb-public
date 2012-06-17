@@ -55,6 +55,7 @@ exports.JSONDB.variables.$sort = "$sort";
 exports.JSONDB.variables.$unset = "$unset";
 exports.JSONDB.variables.$inc = "$inc";
 exports.JSONDB.variables.$set = "$set";
+exports.JSONDB.variables.$has = "$has";
 
 // a cache used to store traversal information for objects between inner loop iterations
 exports.JSONDB.variables.tcache = {};
@@ -1197,6 +1198,7 @@ exports.JSONDB.classes.QueryCompiler = function() {
 								case exports.JSONDB.variables.$unset:
 								case exports.JSONDB.variables.$inc:
 								case exports.JSONDB.variables.$set:
+								case exports.JSONDB.variables.$has:
 									this._addFunction(closure, exports.JSONDB.functions[func], [key, value[func]], or);
 									break;
 							}
@@ -1313,6 +1315,30 @@ exports.JSONDB.functions.$exists = function(a, yes, b) {
 		return v !== undefined;
 	}
 	return v === undefined;
+};
+
+/**
+ * Allows filtering of objects stored in arrays within a collection.
+ * Useful for filtering on one2many relationships etc.
+ */
+exports.JSONDB.functions.$has = function(a, b, c)
+{
+	var v = exports.JSONDB.functions.traverse(a, c);
+
+	if (v != undefined && v.length) {
+		Ti.API.debug('defined')
+		for (var i=0; i < v.length; i++) {
+			for (var k in b) {
+				if (v[i][k] !== b[k]) {
+					return false;
+				}
+			}
+		}
+		
+		return true;
+	}
+	
+	return false;
 };
 
 exports.JSONDB.functions.$size = function(a, b, c) {
